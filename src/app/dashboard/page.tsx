@@ -2,26 +2,76 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { motion } from "framer-motion";
-import { GraduationCap, LogOut, User, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import {
+  GraduationCap,
+  LogOut,
+  User,
+  Shield,
+  Trophy,
+  Clock,
+  BookOpen,
+  TrendingUp,
+  Play,
+  History,
+  Flame,
+} from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
+
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
+    } else if (status === "authenticated") {
+      fetchStats();
     }
   }, [status, router]);
 
-  if (status === "loading") {
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/dashboard/stats");
+      const data = await response.json();
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard stats",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" });
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
+  };
+
+  if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -31,133 +81,206 @@ export default function DashboardPage() {
     return null;
   }
 
-  const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/" });
-  };
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              UPSC Practice
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
-              <User className="w-4 h-4" />
-              <span>{session.user?.name}</span>
-              {session.user?.role === "admin" && (
-                <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold flex items-center gap-1">
-                  <Shield className="w-3 h-3" />
-                  Admin
-                </span>
-              )}
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm font-medium"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-          </div>
+    <>
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Welcome back, {session.user?.name?.split(" ")[0]}! 👋
+          </h2>
+          <p className="text-muted-foreground">Here's your progress overview</p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
-        >
-          {/* Welcome Card */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 mb-8 border border-gray-200">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              Welcome back, {session.user?.name?.split(" ")[0]}! 👋
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Ready to continue your UPSC preparation journey?
-            </p>
+        {/* Stats Overview */}
+        {stats && stats.totalTests > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
+                  <Trophy className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalTests}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stats.totalQuestions} questions attempted
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* User Info */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  {session.user?.name?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800">{session.user?.name}</p>
-                  <p className="text-sm text-gray-600">{session.user?.email}</p>
-                </div>
-              </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Average Score</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.averageScore.toFixed(1)}%</div>
+                  <Progress value={stats.averageScore} className="mt-2" />
+                </CardContent>
+              </Card>
 
-              <div className="flex items-center gap-2 pt-3 border-t border-blue-200">
-                <span className="text-sm text-gray-600">Role:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  session.user?.role === "admin" 
-                    ? "bg-purple-100 text-purple-700" 
-                    : "bg-blue-100 text-blue-700"
-                }`}>
-                  {session.user?.role === "admin" ? "Administrator" : "Student"}
-                </span>
-              </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Time Spent</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {Math.floor(stats.totalTimeSpent / 3600)}h {Math.floor((stats.totalTimeSpent % 3600) / 60)}m
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total practice time</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Daily Streak</CardTitle>
+                  <Flame className="h-4 w-4 text-orange-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.streak} days</div>
+                  <p className="text-xs text-muted-foreground">Keep it going!</p>
+                </CardContent>
+              </Card>
             </div>
-          </div>
 
-          {/* Quick Actions */}
-          <div className="grid sm:grid-cols-2 gap-6">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200 cursor-pointer"
-            >
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Start New Test</h3>
-              <p className="text-gray-600 text-sm">Configure and begin a practice test</p>
-            </motion.div>
+            {/* Topic Strength */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Topic-wise Strength</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {stats.topicStrength.slice(0, 5).map((topic: any) => (
+                    <div key={topic.topic}>
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium">{topic.topic}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {topic.averageAccuracy.toFixed(0)}%
+                        </span>
+                      </div>
+                      <Progress value={topic.averageAccuracy} />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
 
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-200 cursor-pointer"
-            >
-              <h3 className="text-xl font-bold text-gray-800 mb-2">View History</h3>
-              <p className="text-gray-600 text-sm">Review your past test attempts</p>
-            </motion.div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Insights</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {stats.strongTopics.length > 0 && (
+                    <div>
+                      <div className="text-sm font-medium mb-2">Strong Topics 💪</div>
+                      <div className="flex flex-wrap gap-2">
+                        {stats.strongTopics.map((topic: string) => (
+                          <Badge key={topic} className="bg-green-100 text-green-800">
+                            {topic}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {stats.weakTopics.length > 0 && (
+                    <div>
+                      <div className="text-sm font-medium mb-2">Needs Improvement 📚</div>
+                      <div className="flex flex-wrap gap-2">
+                        {stats.weakTopics.map((topic: string) => (
+                          <Badge key={topic} variant="secondary">
+                            {topic}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        ) : (
+          <Card className="mb-8">
+            <CardContent className="pt-6 text-center">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No tests taken yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Start your first practice test to see your progress here
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-            {session.user?.role === "admin" && (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg p-6 text-white cursor-pointer sm:col-span-2"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-5 h-5" />
-                  <h3 className="text-xl font-bold">Admin Dashboard</h3>
-                </div>
-                <p className="text-purple-100 text-sm">Manage questions and view platform analytics</p>
-              </motion.div>
-            )}
-          </div>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push("/test/configure")}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Play className="h-5 w-5" />
+                Start New Test
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Configure and begin a new practice test
+              </p>
+            </CardContent>
+          </Card>
 
-          {/* Success Message */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 bg-green-50 border border-green-200 rounded-xl p-4 text-center"
-          >
-            <p className="text-green-800 font-medium">
-              ✅ Authentication successful! You're now logged in.
-            </p>
-          </motion.div>
-        </motion.div>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push("/history")}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                View History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Review your past test attempts
+              </p>
+            </CardContent>
+          </Card>
+
+          {session.user?.role === "admin" && (
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-primary text-primary-foreground" onClick={() => router.push("/admin/questions")}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Admin Panel
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm opacity-90">
+                  Manage questions and platform settings
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </main>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-3 mt-2">
+                <p>Are you sure you want to sign out?</p>
+                <p className="text-sm">
+                  Your progress is saved. You can continue from where you left off when you sign back in.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
