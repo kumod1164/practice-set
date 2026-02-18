@@ -4,16 +4,18 @@ import { Session } from "next-auth";
 /**
  * Check if an email belongs to an admin user
  * @param email - User's email address
- * @returns true if the email matches the ADMIN_EMAIL environment variable
+ * @returns true if the email matches any of the ADMIN_EMAIL environment variable (comma-separated)
  */
 export function isAdmin(email: string | null | undefined): boolean {
   if (!email) return false;
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail) {
+  const adminEmails = process.env.ADMIN_EMAIL;
+  if (!adminEmails) {
     console.warn("ADMIN_EMAIL environment variable is not set");
     return false;
   }
-  return email.toLowerCase() === adminEmail.toLowerCase();
+  // Support comma-separated list of admin emails
+  const adminList = adminEmails.split(',').map(e => e.trim().toLowerCase());
+  return adminList.includes(email.toLowerCase());
 }
 
 /**

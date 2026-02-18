@@ -21,7 +21,8 @@ export default {
 
         if (!dbUser) {
           // Create new user if doesn't exist
-          const isAdmin = user.email === process.env.ADMIN_EMAIL;
+          const adminEmails = process.env.ADMIN_EMAIL?.split(',').map(e => e.trim().toLowerCase()) || [];
+          const isAdmin = user.email ? adminEmails.includes(user.email.toLowerCase()) : false;
           dbUser = await User.create({
             email: user.email,
             name: user.name || profile?.name || "User",
@@ -39,7 +40,8 @@ export default {
           }
           
           // Check if user should be admin
-          const isAdmin = user.email === process.env.ADMIN_EMAIL;
+          const adminEmails = process.env.ADMIN_EMAIL?.split(',').map(e => e.trim().toLowerCase()) || [];
+          const isAdmin = user.email ? adminEmails.includes(user.email.toLowerCase()) : false;
           if (isAdmin && dbUser.role !== "admin") {
             updates.role = "admin";
           }
