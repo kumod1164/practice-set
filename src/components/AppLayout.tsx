@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
@@ -14,23 +13,17 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { status } = useSession();
-  const router = useRouter();
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
-
-  // Don't show layout on login page or test taking page
+  // Pages that should not show the layout (sidebar/header)
   const isLoginPage = pathname === "/login";
+  const isLandingPage = pathname === "/";
   const isTestPage = pathname?.startsWith("/test/") && pathname !== "/test/configure";
-  const shouldShowLayout = !isLoginPage && !isTestPage;
+  const shouldShowLayout = !isLoginPage && !isLandingPage && !isTestPage;
 
-  if (status === "loading") {
+  // Show loading only for authenticated pages
+  if (status === "loading" && shouldShowLayout) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -41,6 +34,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     );
   }
 
+  // Don't show layout for landing, login, or test pages
   if (!shouldShowLayout) {
     return <>{children}</>;
   }

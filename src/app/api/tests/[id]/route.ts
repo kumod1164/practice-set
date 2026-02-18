@@ -9,12 +9,15 @@ import { handleAPIError } from "@/lib/errors";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAuthAPI();
 
-    const test = await testService.getTestById(params.id);
+    // Await params
+    const { id } = await params;
+
+    const test = await testService.getTestById(id);
 
     return Response.json({
       success: true,

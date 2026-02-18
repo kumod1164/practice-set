@@ -1,0 +1,33 @@
+[
+  {
+    "topic": "Indian Polity",
+    "subtopic": "Constitution",
+    "question": "Which article of the Indian Constitution deals with the Right to Equality?",
+    "options": [
+      "Article 14",
+      "Article 19",
+      "Article 21",
+      "Article 32"
+    ],
+    "correctAnswer": 0,
+    "difficulty": "easy",
+    "explanation": "Article 14 of the Indian Constitution guarantees equality before law and equal protection of laws to all persons within the territory of India.",
+    "tags": ["constitution", "fundamental-rights", "equality"]
+  },
+  {
+    "topic": "Indian Polity",
+    "subtopic": "Fundamental Rights",
+    "question": "Which of the following is NOT a Fundamental Right under the Indian Constitution?",
+    "options": [
+      "Right to Equality",
+      "Right to Freedom",
+      "Right to Property",
+      "Right against Exploitation"
+    ],
+    "correctAnswer": 2,
+    "difficulty": "medium",
+    "explanation": "The Right to Property was originally a Fundamental Right under Article 31, but it was removed by the 44th Amendment Act, 1978. It is now a Constitutional Right under Article 300A.",
+    "tags": ["fundamental-rights", "amendments", "property"]
+  }
+
+]

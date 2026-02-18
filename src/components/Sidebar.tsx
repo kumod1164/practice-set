@@ -58,7 +58,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const adminMenuItems = [
     {
       icon: Shield,
-      label: "Admin Panel",
+      label: "Admin Dashboard",
       href: "/admin",
       color: "text-red-500",
     },

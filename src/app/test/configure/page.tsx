@@ -35,12 +35,16 @@ export default function TestConfigurePage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const [availableTopics, setAvailableTopics] = useState<string[]>([]);
+  const [availableSubtopics, setAvailableSubtopics] = useState<Record<string, string[]>>({});
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedSubtopics, setSelectedSubtopics] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard" | "mixed">("mixed");
   const [questionCount, setQuestionCount] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [loadingTopics, setLoadingTopics] = useState(true);
   const [availableCount, setAvailableCount] = useState<number | null>(null);
+  const [maxQuestions, setMaxQuestions] = useState<number>(0);
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [activeSession, setActiveSession] = useState<any>(null);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -50,6 +54,33 @@ export default function TestConfigurePage() {
       router.push("/login");
     }
   }, [status, router]);
+
+  // Load available topics from database
+  useEffect(() => {
+    const fetchTopics = async () => {
+      if (status === "authenticated") {
+        try {
+          const response = await fetch("/api/tests/topics");
+          const data = await response.json();
+          if (data.success) {
+            setAvailableTopics(data.data.topics);
+            setAvailableSubtopics(data.data.subtopicsByTopic);
+          }
+        } catch (error) {
+          console.error("Failed to fetch topics:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load available topics",
+            variant: "destructive",
+          });
+        } finally {
+          setLoadingTopics(false);
+        }
+      }
+    };
+
+    fetchTopics();
+  }, [status, toast]);
 
   useEffect(() => {
     setDurationMinutes(Math.ceil(questionCount * 1.2));
@@ -122,15 +153,45 @@ export default function TestConfigurePage() {
     // Clear subtopics when topic is deselected
     if (selectedTopics.includes(topic)) {
       setSelectedSubtopics((prev) =>
-        prev.filter((st) => !SUBTOPICS[topic]?.includes(st))
+        prev.filter((st) => !availableSubtopics[topic]?.includes(st))
       );
     }
+    // Reset validation when topics change
+    setAvailableCount(null);
+  };
+
+  const handleSelectAllTopics = () => {
+    if (selectedTopics.length === availableTopics.length) {
+      // Deselect all
+      setSelectedTopics([]);
+      setSelectedSubtopics([]);
+    } else {
+      // Select all
+      setSelectedTopics(availableTopics);
+    }
+    setAvailableCount(null);
+  };
+
+  const handleSelectAllSubtopics = () => {
+    // Get all subtopics for selected topics
+    const allSubtopics = selectedTopics.flatMap(topic => availableSubtopics[topic] || []);
+    
+    if (selectedSubtopics.length === allSubtopics.length && allSubtopics.length > 0) {
+      // Deselect all
+      setSelectedSubtopics([]);
+    } else {
+      // Select all
+      setSelectedSubtopics(allSubtopics);
+    }
+    setAvailableCount(null);
   };
 
   const handleSubtopicToggle = (subtopic: string) => {
     setSelectedSubtopics((prev) =>
       prev.includes(subtopic) ? prev.filter((st) => st !== subtopic) : [...prev, subtopic]
     );
+    // Reset validation when subtopics change
+    setAvailableCount(null);
   };
 
   const handleValidate = async () => {
@@ -160,10 +221,21 @@ export default function TestConfigurePage() {
 
       if (data.success) {
         setAvailableCount(data.data.availableCount);
-        toast({
-          title: "Configuration Valid",
-          description: `${data.data.availableCount} questions available`,
-        });
+        setMaxQuestions(data.data.availableCount);
+        
+        // Adjust question count if it exceeds available
+        if (questionCount > data.data.availableCount) {
+          setQuestionCount(data.data.availableCount);
+          toast({
+            title: "Question Count Adjusted",
+            description: `Only ${data.data.availableCount} questions available. Count adjusted automatically.`,
+          });
+        } else {
+          toast({
+            title: "Configuration Valid",
+            description: `${data.data.availableCount} questions available`,
+          });
+        }
       } else {
         toast({
           title: "Error",
@@ -232,13 +304,31 @@ export default function TestConfigurePage() {
     }
   };
 
-  if (status === "loading" || checkingSession) {
+  if (status === "loading" || checkingSession || loadingTopics) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (availableTopics.length === 0) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-6xl">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Questions Available</h3>
+              <p className="text-muted-foreground mb-4">
+                There are no questions in the database yet. Please contact the administrator to add questions.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -299,12 +389,23 @@ export default function TestConfigurePage() {
           {/* Topics Selection */}
           <Card>
             <CardHeader>
-              <CardTitle>Select Topics</CardTitle>
-              <CardDescription>Choose one or more topics to practice</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Select Topics</CardTitle>
+                  <CardDescription>Choose one or more topics to practice</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAllTopics}
+                >
+                  {selectedTopics.length === availableTopics.length ? "Deselect All" : "Select All"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {TOPICS.map((topic) => (
+                {availableTopics.map((topic) => (
                   <div
                     key={topic}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
@@ -328,8 +429,24 @@ export default function TestConfigurePage() {
           {selectedTopics.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Select Subtopics (Optional)</CardTitle>
-                <CardDescription>Narrow down to specific subtopics</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Select Subtopics (Optional)</CardTitle>
+                    <CardDescription>Narrow down to specific subtopics</CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAllSubtopics}
+                  >
+                    {(() => {
+                      const allSubtopics = selectedTopics.flatMap(topic => availableSubtopics[topic] || []);
+                      return selectedSubtopics.length === allSubtopics.length && allSubtopics.length > 0
+                        ? "Deselect All"
+                        : "Select All";
+                    })()}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -337,7 +454,7 @@ export default function TestConfigurePage() {
                     <div key={topic}>
                       <div className="font-medium mb-2 text-sm text-muted-foreground">{topic}</div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {SUBTOPICS[topic]?.map((subtopic) => (
+                        {availableSubtopics[topic]?.map((subtopic) => (
                           <div
                             key={subtopic}
                             className={`p-2 border rounded cursor-pointer text-sm transition-all ${
@@ -392,13 +509,28 @@ export default function TestConfigurePage() {
                   id="questionCount"
                   type="number"
                   min={1}
-                  max={200}
+                  max={maxQuestions || 200}
                   value={questionCount}
-                  onChange={(e) => setQuestionCount(parseInt(e.target.value) || 1)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    if (maxQuestions && value > maxQuestions) {
+                      setQuestionCount(maxQuestions);
+                      toast({
+                        title: "Limit Reached",
+                        description: `Maximum ${maxQuestions} questions available`,
+                        variant: "destructive",
+                      });
+                    } else {
+                      setQuestionCount(value);
+                    }
+                    setAvailableCount(null); // Reset validation
+                  }}
                   className="mt-2"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Recommended: 10-50 questions
+                  {maxQuestions > 0 
+                    ? `Maximum available: ${maxQuestions} questions`
+                    : "Validate configuration to see available questions"}
                 </p>
               </div>
             </CardContent>

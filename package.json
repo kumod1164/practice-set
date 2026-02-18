@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node --compiler-options {\\\"module\\\":\\\"commonjs\\\"} scripts/seed.ts"
+    "seed": "ts-node --compiler-options {\\\"module\\\":\\\"commonjs\\\"} scripts/seed.ts",
+    "clear-questions": "ts-node --compiler-options {\\\"module\\\":\\\"commonjs\\\"} scripts/clear-questions.ts",
+    "upload-questions": "ts-node --compiler-options {\\\"module\\\":\\\"commonjs\\\"} scripts/upload-all-questions.ts"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",

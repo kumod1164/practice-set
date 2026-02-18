@@ -10,14 +10,17 @@ import { handleAPIError } from "@/lib/errors";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdminSession();
 
+    // Await params
+    const { id } = await params;
+
     // Get question
-    const question = await questionService.getQuestionById(params.id);
+    const question = await questionService.getQuestionById(id);
 
     return Response.json({
       success: true,
@@ -35,17 +38,20 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdminSession();
 
+    // Await params
+    const { id } = await params;
+
     // Parse request body
     const body = await request.json();
 
     // Update question
-    const question = await questionService.updateQuestion(params.id, body);
+    const question = await questionService.updateQuestion(id, body);
 
     return Response.json({
       success: true,
@@ -64,14 +70,17 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdminSession();
 
+    // Await params
+    const { id } = await params;
+
     // Delete question
-    await questionService.deleteQuestion(params.id);
+    await questionService.deleteQuestion(id);
 
     return Response.json({
       success: true,

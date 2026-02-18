@@ -374,6 +374,34 @@ export class QuestionService {
       throw new DatabaseError("Failed to count questions");
     }
   }
+
+  /**
+   * Get available topics and subtopics from database
+   * @returns Object with topics and their subtopics
+   */
+  async getAvailableTopics(): Promise<{ topics: string[]; subtopicsByTopic: Record<string, string[]> }> {
+    try {
+      await connectDB();
+
+      // Get all unique topics
+      const topics = await Question.distinct("topic");
+
+      // Get subtopics for each topic
+      const subtopicsByTopic: Record<string, string[]> = {};
+      
+      for (const topic of topics) {
+        const subtopics = await Question.distinct("subtopic", { topic });
+        subtopicsByTopic[topic] = subtopics.sort();
+      }
+
+      return {
+        topics: topics.sort(),
+        subtopicsByTopic,
+      };
+    } catch (error) {
+      throw new DatabaseError("Failed to fetch available topics");
+    }
+  }
 }
 
 // Export singleton instance
