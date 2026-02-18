@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
 
     const { sessionId, questionIndex, answer } = validation.data;
 
-    await testService.saveAnswer(sessionId, questionIndex, answer);
+    await testService.saveAnswer(sessionId, questionIndex, answer as 0 | 1 | 2 | 3);
 
     return Response.json({
       success: true,

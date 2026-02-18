@@ -1,7 +1,7 @@
 import connectDB from "../db";
 import Question, { IQuestion } from "@/models/Question";
 import Test from "@/models/Test";
-import { QuestionInput, QuestionFilterInput, validate, QuestionSchema } from "../validations";
+import { QuestionInput, QuestionFilterInput, validate, QuestionSchema, getFirstError } from "../validations";
 import { ValidationError, NotFoundError, DatabaseError } from "../errors";
 import mongoose from "mongoose";
 
@@ -116,7 +116,7 @@ export class QuestionService {
    * @param filters - Filter criteria
    * @returns Array of questions
    */
-  async getQuestions(filters: QuestionFilterInput = {}): Promise<IQuestion[]> {
+  async getQuestions(filters: Partial<QuestionFilterInput> = {}): Promise<IQuestion[]> {
     try {
       await connectDB();
 
@@ -194,7 +194,7 @@ export class QuestionService {
         result.failed++;
         result.errors.push({
           line: index + 1,
-          error: validation.errors.errors[0]?.message || "Validation failed",
+          error: getFirstError(validation.errors),
         });
       } else {
         validQuestions.push(validation.data);

@@ -38,7 +38,7 @@ export const QuestionSchema = z.object({
     .min(0, "Correct answer must be between 0 and 3")
     .max(3, "Correct answer must be between 0 and 3"),
   difficulty: z.enum(["easy", "medium", "hard"], {
-    errorMap: () => ({ message: "Difficulty must be 'easy', 'medium', or 'hard'" }),
+    message: "Difficulty must be 'easy', 'medium', or 'hard'",
   }),
   explanation: z
     .string()
@@ -60,7 +60,7 @@ export const TestConfigSchema = z.object({
     .max(10, "Maximum 10 topics allowed"),
   subtopics: z.array(z.string().min(1, "Subtopic cannot be empty")).optional(),
   difficulty: z.enum(["easy", "medium", "hard", "mixed"], {
-    errorMap: () => ({ message: "Difficulty must be 'easy', 'medium', 'hard', or 'mixed'" }),
+    message: "Difficulty must be 'easy', 'medium', 'hard', or 'mixed'",
   }),
   questionCount: z
     .number()
@@ -203,7 +203,7 @@ export function validate<T>(
  */
 export function formatValidationErrors(error: z.ZodError): Record<string, string> {
   const formatted: Record<string, string> = {};
-  error.errors.forEach((err) => {
+  error.issues.forEach((err) => {
     const path = err.path.join(".");
     formatted[path] = err.message;
   });
@@ -216,5 +216,5 @@ export function formatValidationErrors(error: z.ZodError): Record<string, string
  * @returns First error message
  */
 export function getFirstError(error: z.ZodError): string {
-  return error.errors[0]?.message || "Validation failed";
+  return error.issues[0]?.message || "Validation failed";
 }

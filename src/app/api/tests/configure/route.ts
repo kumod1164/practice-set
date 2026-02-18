@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireAuthAPI } from "@/lib/session";
 import { questionService } from "@/lib/services/question-service";
 import { handleAPIError } from "@/lib/errors";
-import { TestConfigSchema, validate } from "@/lib/validations";
+import { TestConfigSchema, validate, formatValidationErrors } from "@/lib/validations";
 
 /**
  * POST /api/tests/configure
@@ -18,15 +18,13 @@ export async function POST(request: NextRequest) {
     // Validate configuration
     const validation = validate(TestConfigSchema, body);
     if (!validation.success) {
-      console.log("Validation errors:", validation.errors.errors); // Debug log
+      const formattedErrors = formatValidationErrors(validation.errors);
+      console.log("Validation errors:", formattedErrors); // Debug log
       return Response.json(
         {
           success: false,
           error: "Invalid configuration",
-          errors: validation.errors.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message
-          })),
+          errors: formattedErrors,
         },
         { status: 400 }
       );
