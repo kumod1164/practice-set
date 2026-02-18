@@ -163,11 +163,7 @@ function parseCSV(content: string): QuestionInput[] {
   return questions;
 }
 
-// Configure route to handle larger payloads
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "10mb",
-    },
-  },
-};
+// Configure route to handle larger payloads (Next.js 16+ uses route segment config)
+export const maxDuration = 60; // Maximum execution time in seconds
+export const dynamic = 'force-dynamic'; // Disable static optimization
+
