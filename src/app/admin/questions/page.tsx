@@ -31,7 +31,10 @@ interface Question {
   topic: string;
   subtopic: string;
   question: string;
+  options: [string, string, string, string];
+  correctAnswer: 0 | 1 | 2 | 3;
   difficulty: "easy" | "medium" | "hard";
+  explanation: string;
   tags: string[];
   createdAt: string;
 }
