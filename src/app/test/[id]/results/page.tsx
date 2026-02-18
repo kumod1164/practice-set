@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import AppLayout from "@/components/AppLayout";
 import {
   Trophy,
   Clock,
@@ -123,8 +124,8 @@ export default function ResultsPage() {
   const motivational = getMotivationalMessage(parseFloat(percentage));
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <AppLayout>
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2">Test Results</h1>
@@ -136,35 +137,35 @@ export default function ResultsPage() {
             {/* Score Card */}
             <Card className="mb-6 border-2 border-primary">
               <CardContent className="pt-6">
-                <div className="text-center mb-6">
-                  <Trophy className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-                  <div className="text-6xl font-bold mb-2">{percentage}%</div>
-                  <div className="text-xl text-muted-foreground">
+                <div className="text-center mb-4">
+                  <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-3" />
+                  <div className="text-5xl font-bold mb-2">{percentage}%</div>
+                  <div className="text-lg text-muted-foreground">
                     {test.score} out of {test.totalQuestions} correct
                   </div>
                 </div>
 
-                <Progress value={parseFloat(percentage)} className="h-3 mb-6" />
+                <Progress value={parseFloat(percentage)} className="h-2 mb-4" />
 
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-green-600">{test.correctAnswers}</div>
-                    <div className="text-sm text-green-700">Correct</div>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                    <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-1" />
+                    <div className="text-xl font-bold text-green-600">{test.correctAnswers}</div>
+                    <div className="text-xs text-green-700 dark:text-green-400">Correct</div>
                   </div>
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <XCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-red-600">{test.incorrectAnswers}</div>
-                    <div className="text-sm text-red-700">Incorrect</div>
+                  <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                    <XCircle className="h-6 w-6 text-red-600 mx-auto mb-1" />
+                    <div className="text-xl font-bold text-red-600">{test.incorrectAnswers}</div>
+                    <div className="text-xs text-red-700 dark:text-red-400">Incorrect</div>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <MinusCircle className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-gray-600">{test.unansweredQuestions}</div>
-                    <div className="text-sm text-gray-700">Unanswered</div>
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <MinusCircle className="h-6 w-6 text-gray-600 mx-auto mb-1" />
+                    <div className="text-xl font-bold text-gray-600">{test.unansweredQuestions}</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-400">Unanswered</div>
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-secondary rounded-lg flex items-center gap-3">
+                <div className="mt-4 p-3 bg-secondary rounded-lg flex items-center gap-3">
                   <Clock className="h-5 w-5 text-primary" />
                   <div>
                     <div className="text-sm text-muted-foreground">Time Taken</div>
@@ -175,17 +176,17 @@ export default function ResultsPage() {
             </Card>
 
             {/* Motivational Message */}
-            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <Sparkles className="h-8 w-8 text-blue-600 flex-shrink-0" />
+            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-2 border-blue-200 dark:border-blue-800">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
                   <div>
-                    <div className="text-xl font-semibold mb-2 text-blue-900">
+                    <div className="text-lg font-semibold mb-1 text-blue-900 dark:text-blue-100">
                       {motivational.message}
                     </div>
-                    <div className="text-sm italic text-blue-700 mb-3">"{motivational.quote}"</div>
+                    <div className="text-sm italic text-blue-700 dark:text-blue-300 mb-2">"{motivational.quote}"</div>
                     {motivational.improvementMessage && (
-                      <div className="text-sm font-medium text-green-700 bg-green-50 p-3 rounded-lg">
+                      <div className="text-sm font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950 p-2 rounded-lg">
                         {motivational.improvementMessage}
                       </div>
                     )}
@@ -368,6 +369,6 @@ export default function ResultsPage() {
           </>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 }
