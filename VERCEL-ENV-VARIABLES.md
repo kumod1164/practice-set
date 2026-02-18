@@ -4,6 +4,15 @@ Copy these exact values when deploying to Vercel:
 
 ---
 
+## IMPORTANT: Get Your Actual Values
+
+**For Google OAuth credentials:**
+- Go to your `.env.local` file (NOT committed to Git)
+- Copy your actual `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+- Use those values in Vercel
+
+---
+
 ## 1. MONGODB_URI
 ```
 mongodb+srv://upsc_admin:XHXFKhRnxSrIQ2m8@upsc-cluster.fu9kuo4.mongodb.net/upsc-practice?retryWrites=true&w=majority&appName=upsc-cluster
@@ -39,14 +48,14 @@ dGhpc2lzYXNlY3VyZXNlY3JldGtleWZvcnByb2R1Y3Rpb24=
 
 ## 4. GOOGLE_CLIENT_ID
 ```
-666169765851-2mqfalv6gfde17grm3r0pfo0lq9ocf1g.apps.googleusercontent.com
+YOUR_GOOGLE_CLIENT_ID_HERE
 ```
 
 ---
 
 ## 5. GOOGLE_CLIENT_SECRET
 ```
-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
+YOUR_GOOGLE_CLIENT_SECRET_HERE
 ```
 
 ---
@@ -124,9 +133,9 @@ NEXTAUTH_URL=https://your-app-name.vercel.app
 
 NEXTAUTH_SECRET=dGhpc2lzYXNlY3VyZXNlY3JldGtleWZvcnByb2R1Y3Rpb24=
 
-GOOGLE_CLIENT_ID=666169765851-2mqfalv6gfde17grm3r0pfo0lq9ocf1g.apps.googleusercontent.com
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
 
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET_HERE
 
 ADMIN_EMAIL=kumodsharma1164@gmail.com
 ```
