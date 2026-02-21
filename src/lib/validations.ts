@@ -43,8 +43,16 @@ export const QuestionSchema = z.object({
   explanation: z
     .string()
     .min(10, "Explanation must be at least 10 characters")
-    .max(2000, "Explanation must be at most 2000 characters"),
+    .max(2000, "Explanation must be at most 2000 characters")
+    .optional()
+    .or(z.literal("")),
   tags: z.array(z.string()).optional().default([]),
+  pyqYear: z
+    .number()
+    .int("PYQ year must be an integer")
+    .min(1950, "PYQ year must be 1950 or later")
+    .max(new Date().getFullYear() + 1, `PYQ year cannot be beyond ${new Date().getFullYear() + 1}`)
+    .optional(),
 });
 
 export type QuestionInput = z.infer<typeof QuestionSchema>;

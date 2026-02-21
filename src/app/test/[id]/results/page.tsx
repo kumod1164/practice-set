@@ -30,6 +30,7 @@ interface Question {
   options: [string, string, string, string];
   correctAnswer: number;
   difficulty: string;
+  pyqYear?: number;
   explanation: string;
 }
 
@@ -350,7 +351,7 @@ export default function ResultsPage() {
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="font-mono">Q{originalIndex + 1}</Badge>
                         <Badge
                           variant="secondary"
@@ -364,6 +365,14 @@ export default function ResultsPage() {
                         >
                           {question.difficulty}
                         </Badge>
+                        {question.pyqYear && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                          >
+                            PYQ - {question.pyqYear}
+                          </Badge>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           {question.topic} › {question.subtopic}
                         </span>
