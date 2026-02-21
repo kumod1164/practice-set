@@ -192,7 +192,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className="border-t bg-secondary/30 p-3">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
-              {collapsed ? "v1.0" : "Version 1.0.0"}
+              {collapsed ? "v1.0" : "Version 1.1.0"}
             </p>
           </div>
         </div>
