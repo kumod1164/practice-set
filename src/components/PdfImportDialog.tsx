@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, Loader2 } from "lucide-react";
+import { extractPdfQuestions } from "@/app/actions/extract-pdf";
 
 interface PdfImportDialogProps {
   onClose: () => void;
@@ -36,7 +37,7 @@ export default function PdfImportDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [step, setStep] = useState<"upload" | "metadata">("upload");
   const [extractedQuestions, setExtractedQuestions] = useState<any[]>([]);
-  
+
   // Metadata
   const [topic, setTopic] = useState("");
   const [subtopic, setSubtopic] = useState("");
@@ -71,7 +72,7 @@ export default function PdfImportDialog({
 
     setLoading(true);
     setLoadingMessage("Uploading PDF...");
-    
+
     try {
       const formData = new FormData();
       formData.append("pdf", selectedFile);
@@ -87,21 +88,18 @@ export default function PdfImportDialog({
         });
       }, 5000);
 
-      const response = await fetch("/api/admin/questions/extract-pdf", {
-        method: "POST",
-        body: formData,
-      });
+      // Use Server Action instead of fetch to bypass Vercel's 4.5MB body limit
+      const data = await extractPdfQuestions(formData);
 
       clearInterval(messageInterval);
-      const data = await response.json();
 
       if (data.success) {
-        console.log("Extracted questions:", data.data.questions);
-        setExtractedQuestions(data.data.questions);
+        console.log("Extracted questions:", data.data!.questions);
+        setExtractedQuestions(data.data!.questions);
         setStep("metadata");
         toast({
           title: "Success",
-          description: `Extracted ${data.data.validQuestions} questions from PDF`,
+          description: `Extracted ${data.data!.validQuestions} questions from PDF`,
         });
       } else {
         toast({
