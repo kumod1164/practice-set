@@ -234,18 +234,38 @@ export class TestService {
     try {
       await connectDB();
 
-      const session = await TestSession.findById(sessionId).populate("questions");
+      const session = await TestSession.findById(sessionId);
       if (!session) {
         throw new NotFoundError("Test session");
       }
 
-      // Get questions
+      // Get questions in the SAME ORDER as stored in session
       const questions = await Question.find({
         _id: { $in: session.questions },
       });
 
+      // Sort questions to match the order in session.questions
+      const questionMap = new Map(questions.map(q => [q._id.toString(), q]));
+      const orderedQuestions = session.questions.map(qId => {
+        const question = questionMap.get(qId.toString());
+        if (!question) {
+          throw new Error(`Question ${qId} not found`);
+        }
+        return question;
+      });
+
+      console.log("Submitting test - Total questions:", orderedQuestions.length);
+      console.log("Session answers length:", session.answers.length);
+
       // Calculate results
-      const results = this.calculateResults(session, questions);
+      const results = this.calculateResults(session, orderedQuestions);
+
+      console.log("Calculated results:", {
+        correct: results.correctAnswers,
+        incorrect: results.incorrectAnswers,
+        unanswered: results.unansweredQuestions,
+        total: results.totalQuestions
+      });
 
       // Create test record
       const test = await Test.create({
@@ -276,6 +296,7 @@ export class TestService {
       if (error instanceof NotFoundError) {
         throw error;
       }
+      console.error("Error submitting test:", error);
       throw new DatabaseError("Failed to submit test");
     }
   }
@@ -404,14 +425,24 @@ export class TestService {
     try {
       await connectDB();
 
-      const tests = await Test.find({ userId })
+      console.log("getTestHistory called with userId:", userId);
+      console.log("userId type:", typeof userId);
+      
+      // Convert string to ObjectId for querying
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      console.log("Converted to ObjectId:", userObjectId);
+      
+      const tests = await Test.find({ userId: userObjectId })
         .sort({ submittedAt: -1 })
         .limit(limit)
         .skip(skip)
         .populate("questions");
 
+      console.log("Found tests count:", tests.length);
+
       return tests;
     } catch (error) {
+      console.error("Error in getTestHistory:", error);
       throw new DatabaseError("Failed to fetch test history");
     }
   }

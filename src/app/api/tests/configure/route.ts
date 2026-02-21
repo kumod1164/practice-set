@@ -32,12 +32,16 @@ export async function POST(request: NextRequest) {
 
     const config = validation.data;
 
+    console.log("Test configuration:", config);
+
     // Check question availability
     const availableCount = await questionService.getQuestionCount({
       topics: config.topics,
       subtopics: config.subtopics,
       difficulty: config.difficulty,
     });
+
+    console.log(`Available questions: ${availableCount}, Requested: ${config.questionCount}`);
 
     if (availableCount < config.questionCount) {
       return Response.json(

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -19,19 +20,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Pages that should not show the layout (sidebar/header)
   const isLoginPage = pathname === "/login";
   const isLandingPage = pathname === "/";
-  const isTestPage = pathname?.startsWith("/test/") && pathname !== "/test/configure";
-  const shouldShowLayout = !isLoginPage && !isLandingPage && !isTestPage;
+  // Only hide layout for active test taking (/test/[id]), not configure or results
+  const isTestTakingPage = pathname?.match(/^\/test\/[a-f0-9]{24}$/) !== null; // MongoDB ObjectId pattern
+  const shouldShowLayout = !isLoginPage && !isLandingPage && !isTestTakingPage;
 
   // Show loading only for authenticated pages
   if (status === "loading" && shouldShowLayout) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner messages={["Loading application...", "Just a moment...", "Almost ready..."]} />;
   }
 
   // Don't show layout for landing, login, or test pages
@@ -41,7 +36,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <Header sidebarCollapsed={sidebarCollapsed} />
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -49,17 +44,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <main
         className={cn(
           "flex-1 pt-16 transition-all duration-300",
-          sidebarCollapsed ? "ml-16" : "ml-64"
+          sidebarCollapsed ? "ml-16" : "ml-56"
         )}
       >
-        <div className="p-6 min-h-[calc(100vh-8rem)]">{children}</div>
+        <div className="p-4 min-h-[calc(100vh-8rem)]">{children}</div>
       </main>
       
       {/* Full Width Footer */}
       <footer
         className={cn(
           "border-t bg-card transition-all duration-300",
-          sidebarCollapsed ? "ml-16" : "ml-64"
+          sidebarCollapsed ? "ml-16" : "ml-56"
         )}
       >
         <div className="px-6 py-4">

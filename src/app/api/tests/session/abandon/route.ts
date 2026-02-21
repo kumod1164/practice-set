@@ -5,6 +5,7 @@ import { handleAPIError } from "@/lib/errors";
 
 /**
  * DELETE /api/tests/session/abandon
+ * POST /api/tests/session/abandon
  * Abandon current test session
  */
 export async function DELETE(request: NextRequest) {
@@ -20,4 +21,9 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     return handleAPIError(error);
   }
+}
+
+// Support POST method as well
+export async function POST(request: NextRequest) {
+  return DELETE(request);
 }

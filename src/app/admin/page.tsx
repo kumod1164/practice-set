@@ -19,14 +19,21 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users,
   FileQuestion,
-  TrendingUp,
   Clock,
   Search,
-  Eye,
   Award,
   Target,
-  BarChart3,
+  Eye,
+  ExternalLink,
+  Calendar,
 } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface UserStats {
   _id: string;
@@ -41,6 +48,17 @@ interface UserStats {
   weakTopics: string[];
 }
 
+interface UserTest {
+  _id: string;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  unansweredQuestions: number;
+  timeTaken: number;
+  submittedAt: string;
+}
+
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -50,6 +68,9 @@ export default function AdminDashboardPage() {
   const [filteredUsers, setFilteredUsers] = useState<UserStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserStats | null>(null);
+  const [userTests, setUserTests] = useState<UserTest[]>([]);
+  const [loadingTests, setLoadingTests] = useState(false);
   const [overallStats, setOverallStats] = useState({
     totalUsers: 0,
     totalTests: 0,
@@ -130,26 +151,49 @@ export default function AdminDashboardPage() {
     });
   };
 
+  const handleViewUserTests = async (user: UserStats) => {
+    console.log("Fetching tests for user:", user);
+    setSelectedUser(user);
+    setLoadingTests(true);
+    try {
+      const url = `/api/admin/users/${user._id}/tests`;
+      console.log("Fetching from URL:", url);
+      const response = await fetch(url);
+      const data = await response.json();
+      console.log("Response data:", data);
+      if (data.success) {
+        console.log("User tests:", data.data);
+        setUserTests(data.data);
+      } else {
+        console.error("Failed to load tests:", data.error);
+        toast({
+          title: "Error",
+          description: data.error || "Failed to load user tests",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching user tests:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load user tests",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTests(false);
+    }
+  };
+
+  const handleViewTestResult = (testId: string) => {
+    router.push(`/test/${testId}/results`);
+  };
+
   if (status === "loading" || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading admin dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-          Admin Dashboard
-        </h1>
-        <p className="text-muted-foreground">Monitor all users and their performance</p>
-      </div>
-
+    <>
       {/* Overall Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="border-l-4 border-l-blue-500">
@@ -198,12 +242,12 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="flex gap-4 mb-6">
+      {/* <div className="flex gap-4 mb-6">
         <Button onClick={() => router.push("/admin/questions")} variant="outline">
           <FileQuestion className="mr-2 h-4 w-4" />
           Manage Questions
         </Button>
-      </div>
+      </div> */}
 
       {/* Users Table */}
       <Card>
@@ -237,12 +281,13 @@ export default function AdminDashboardPage() {
                   <TableHead>Strong Topics</TableHead>
                   <TableHead>Weak Topics</TableHead>
                   <TableHead>Last Test</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       {searchQuery ? "No users found" : "No users yet"}
                     </TableCell>
                   </TableRow>
@@ -322,6 +367,17 @@ export default function AdminDashboardPage() {
                       <TableCell>
                         <span className="text-sm">{formatDate(user.lastTestDate)}</span>
                       </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewUserTests(user)}
+                          disabled={user.totalTests === 0}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View Details
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -330,6 +386,89 @@ export default function AdminDashboardPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+
+      {/* User Tests Dialog */}
+      <Dialog open={selectedUser !== null} onOpenChange={() => setSelectedUser(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Test History - {selectedUser?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {loadingTests ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : userTests.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No tests found for this user
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {userTests.map((test) => (
+                <Card key={test._id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <div className="text-2xl font-bold">
+                              {((test.score / test.totalQuestions) * 100).toFixed(1)}%
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {test.score}/{test.totalQuestions} correct
+                            </div>
+                          </div>
+                          <div className="h-12 w-px bg-border"></div>
+                          <div className="flex gap-4">
+                            <div>
+                              <div className="text-sm font-medium text-green-600">
+                                {test.correctAnswers}
+                              </div>
+                              <div className="text-xs text-muted-foreground">Correct</div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-red-600">
+                                {test.incorrectAnswers}
+                              </div>
+                              <div className="text-xs text-muted-foreground">Wrong</div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-600">
+                                {test.unansweredQuestions}
+                              </div>
+                              <div className="text-xs text-muted-foreground">Skipped</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatTime(test.timeTaken)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(test.submittedAt)}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewTestResult(test._id)}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        View Full Results
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
