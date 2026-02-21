@@ -19,6 +19,7 @@ import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import Timer from "@/components/Timer";
 import QuestionPalette from "@/components/QuestionPalette";
 import QuestionCard from "@/components/QuestionCard";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Question {
   _id: string;
@@ -52,6 +53,7 @@ export default function TestPage() {
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [showTimeUpDialog, setShowTimeUpDialog] = useState(false);
   const [showExtensionDialog, setShowExtensionDialog] = useState(false);
+  const [showAbandonDialog, setShowAbandonDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -62,6 +64,18 @@ export default function TestPage() {
     }
   }, [status, router]);
 
+  // Warn user before leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "You have an active test. Are you sure you want to leave?";
+      return e.returnValue;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   const fetchTestSession = async () => {
     try {
       setLoading(true);
@@ -69,6 +83,7 @@ export default function TestPage() {
       const data = await response.json();
 
       if (data.success && data.data) {
+        console.log(`Test session loaded with ${data.data.questions.length} questions`);
         setTestSession(data.data);
       } else {
         toast({
@@ -256,15 +271,38 @@ export default function TestPage() {
     }
   };
 
+  const handleAbandonTest = async () => {
+    try {
+      const response = await fetch("/api/tests/session/abandon", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Test Abandoned",
+          description: "Your test session has been cancelled",
+        });
+        router.push("/dashboard");
+      } else {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to abandon test",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (status === "loading" || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading test...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner messages={["Loading test...", "Preparing questions...", "Almost ready..."]} />;
   }
 
   if (!testSession) {
@@ -275,17 +313,29 @@ export default function TestPage() {
   const answeredCount = testSession.answers.filter((a) => a !== null).length;
   const unansweredCount = testSession.questions.length - answeredCount;
 
+  console.log(`Rendering test page: ${testSession.questions.length} total questions, ${answeredCount} answered, ${unansweredCount} unanswered`);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-card sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">UPSC Practice Test</h1>
-              <p className="text-sm text-muted-foreground">
-                Question {currentIndex + 1} of {testSession.questions.length}
-              </p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-bold">UPSC Practice Test</h1>
+                <p className="text-sm text-muted-foreground">
+                  Question {currentIndex + 1} of {testSession.questions.length}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAbandonDialog(true)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+              >
+                Abandon Test
+              </Button>
             </div>
             <Timer
               initialTime={testSession.remainingTime}
@@ -402,6 +452,27 @@ export default function TestPage() {
               +5 Minutes
             </Button>
             <Button onClick={() => handleExtendTime(10)}>+10 Minutes</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Abandon Test Dialog */}
+      <AlertDialog open={showAbandonDialog} onOpenChange={setShowAbandonDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Abandon Test?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to abandon this test? All your progress will be lost and you'll need to start a new test.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue Test</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleAbandonTest}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Yes, Abandon Test
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

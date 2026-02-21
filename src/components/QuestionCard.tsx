@@ -14,6 +14,7 @@ interface Question {
   question: string;
   options: [string, string, string, string];
   difficulty: "easy" | "medium" | "hard";
+  pyqYear?: number;
 }
 
 interface QuestionCardProps {
@@ -48,14 +49,22 @@ export default function QuestionCard({
                 variant="secondary"
                 className={
                   question.difficulty === "easy"
-                    ? "bg-green-100 text-green-800"
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                     : question.difficulty === "medium"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-red-100 text-red-800"
+                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }
               >
                 {question.difficulty}
               </Badge>
+              {question.pyqYear && (
+                <Badge
+                  variant="secondary"
+                  className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                >
+                  PYQ - {question.pyqYear}
+                </Badge>
+              )}
             </div>
             <div className="text-xs text-muted-foreground mb-2">
               {question.topic} › {question.subtopic}

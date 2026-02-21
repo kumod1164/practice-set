@@ -31,7 +31,8 @@ interface Question {
   options: [string, string, string, string];
   correctAnswer: 0 | 1 | 2 | 3;
   difficulty: "easy" | "medium" | "hard";
-  explanation: string;
+  pyqYear?: number;
+  explanation?: string;
   tags: string[];
 }
 
@@ -50,6 +51,7 @@ export default function AdminQuestionForm({ question, onClose }: AdminQuestionFo
     options: ["", "", "", ""],
     correctAnswer: 0,
     difficulty: "easy",
+    pyqYear: undefined,
     explanation: "",
     tags: [],
   });
@@ -97,9 +99,23 @@ export default function AdminQuestionForm({ question, onClose }: AdminQuestionFo
         });
         onClose();
       } else {
+        // Format validation errors nicely
+        let errorMessage = data.error || "Failed to save question";
+        
+        if (data.fields && typeof data.fields === 'object') {
+          const fieldErrors = Object.entries(data.fields)
+            .map(([field, errors]) => {
+              const errorList = Array.isArray(errors) ? errors : [errors];
+              return `${field}: ${errorList.join(', ')}`;
+            })
+            .join('\n');
+          
+          errorMessage = fieldErrors;
+        }
+        
         toast({
-          title: "Error",
-          description: data.error || "Failed to save question",
+          title: "Validation Error",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -222,14 +238,32 @@ export default function AdminQuestionForm({ question, onClose }: AdminQuestionFo
               </div>
 
               <div>
-                <Label htmlFor="explanation">Explanation *</Label>
+                <Label htmlFor="pyqYear">PYQ Year (Optional)</Label>
+                <Input
+                  id="pyqYear"
+                  type="number"
+                  min={1950}
+                  max={new Date().getFullYear() + 1}
+                  value={formData.pyqYear || ""}
+                  onChange={(e) => {
+                    const value = e.target.value ? parseInt(e.target.value) : undefined;
+                    setFormData({ ...formData, pyqYear: value });
+                  }}
+                  placeholder="e.g., 2023"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter the year this question appeared in UPSC exam
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="explanation">Explanation (Optional)</Label>
                 <Textarea
                   id="explanation"
                   value={formData.explanation}
                   onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
-                  required
                   rows={4}
-                  placeholder="Explain the correct answer..."
+                  placeholder="Explain the correct answer (optional)..."
                 />
               </div>
 
@@ -288,7 +322,7 @@ export default function AdminQuestionForm({ question, onClose }: AdminQuestionFo
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-2 text-xs flex-wrap">
                     <span
                       className={`px-2 py-1 rounded font-medium ${
                         formData.difficulty === "easy"
@@ -300,6 +334,11 @@ export default function AdminQuestionForm({ question, onClose }: AdminQuestionFo
                     >
                       {formData.difficulty}
                     </span>
+                    {formData.pyqYear && (
+                      <span className="px-2 py-1 rounded font-medium bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                        PYQ - {formData.pyqYear}
+                      </span>
+                    )}
                     {tagsInput && (
                       <div className="flex flex-wrap gap-1">
                         {tagsInput.split(",").map((tag, idx) => (

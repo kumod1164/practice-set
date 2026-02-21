@@ -22,6 +22,7 @@ import {
   Flame,
 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -67,14 +68,7 @@ export default function DashboardPage() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!session) {
@@ -83,22 +77,28 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome back, {session.user?.name?.split(" ")[0]}! 👋
+      <div>
+        {/* Welcome Message */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-1">
+            Welcome back, {session.user?.name?.split(' ')[0] || 'Student'}! 👋
           </h2>
-          <p className="text-muted-foreground">Here's your progress overview</p>
+          <p className="text-muted-foreground">
+            {stats && stats.totalTests > 0 
+              ? `You've completed ${stats.totalTests} test${stats.totalTests > 1 ? 's' : ''} so far. Keep up the great work!`
+              : "Ready to start your UPSC preparation journey? Take your first practice test today!"
+            }
+          </p>
         </div>
 
         {/* Stats Overview */}
         {stats && stats.totalTests > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
+              <Card className="border-l-4 border-l-blue-500">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-                  <Trophy className="h-4 w-4 text-muted-foreground" />
+                  <Trophy className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalTests}</div>
@@ -108,10 +108,10 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-l-4 border-l-green-500">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.averageScore.toFixed(1)}%</div>
@@ -119,10 +119,10 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-l-4 border-l-purple-500">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Time Spent</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <Clock className="h-4 w-4 text-purple-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
@@ -132,7 +132,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-l-4 border-l-orange-500">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">Daily Streak</CardTitle>
                   <Flame className="h-4 w-4 text-orange-500" />
@@ -175,7 +175,7 @@ export default function DashboardPage() {
                       <div className="text-sm font-medium mb-2">Strong Topics 💪</div>
                       <div className="flex flex-wrap gap-2">
                         {stats.strongTopics.map((topic: string) => (
-                          <Badge key={topic} className="bg-green-100 text-green-800">
+                          <Badge key={topic} className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                             {topic}
                           </Badge>
                         ))}

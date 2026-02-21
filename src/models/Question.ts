@@ -8,8 +8,9 @@ export interface IQuestion {
   options: [string, string, string, string];
   correctAnswer: 0 | 1 | 2 | 3;
   difficulty: "easy" | "medium" | "hard";
-  explanation: string;
+  explanation?: string;
   tags: string[];
+  pyqYear?: number; // Previous Year Question year (optional)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,13 +59,20 @@ const QuestionSchema = new Schema<IQuestion>(
     },
     explanation: {
       type: String,
-      required: true,
+      required: false,
       minlength: 10,
       maxlength: 2000,
     },
     tags: {
       type: [String],
       default: [],
+    },
+    pyqYear: {
+      type: Number,
+      required: false,
+      min: 1950,
+      max: new Date().getFullYear() + 1,
+      index: true,
     },
   },
   {

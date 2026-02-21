@@ -35,11 +35,15 @@ export async function POST(request: NextRequest) {
     // Select questions for test
     const questions = await questionService.selectQuestionsForTest(config);
 
+    console.log(`Selected ${questions.length} questions for test (requested: ${config.questionCount})`);
+
     // Create test session
     const testSession = await testService.createTestSession(
       session.user.id,
       questions
     );
+
+    console.log(`Test session created with ${testSession.questions.length} questions`);
 
     return Response.json(
       {

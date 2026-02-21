@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Clock, BookOpen, Target, Play } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const TOPICS = [
   "History",
@@ -305,14 +306,13 @@ export default function TestConfigurePage() {
   };
 
   if (status === "loading" || checkingSession || loadingTopics) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner messages={[
+      "Loading test configuration...",
+      "Fetching available topics...",
+      "Almost ready...",
+      "Setting things up...",
+      "Just a moment...",
+    ]} />;
   }
 
   if (availableTopics.length === 0) {
@@ -334,14 +334,7 @@ export default function TestConfigurePage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Configure Your Test</h1>
-        <p className="text-muted-foreground">
-          Customize your practice test by selecting topics, difficulty, and question count
-        </p>
-      </div>
-
+    <>
       {/* Active Session Warning */}
       {activeSession && (
         <Card className="mb-6 border-orange-200 bg-orange-50">
@@ -624,6 +617,6 @@ export default function TestConfigurePage() {
           </Card>
         </div>
       </div>
-    </div>
+    </>
   );
 }

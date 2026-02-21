@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +25,25 @@ import {
   User,
 } from "lucide-react";
 
-export default function Header() {
+// Page title mapping
+const getPageTitle = (pathname: string): string => {
+  if (pathname === "/dashboard") return "Dashboard";
+  if (pathname === "/test/configure") return "Configure Your Test";
+  if (pathname === "/history") return "Test History";
+  if (pathname === "/analytics") return "Analytics";
+  if (pathname === "/admin") return "Admin Dashboard";
+  if (pathname === "/admin/questions") return "Question Management";
+  if (pathname?.match(/^\/test\/[a-f0-9]{24}\/results$/)) return "Test Results";
+  return "UPSC Practice Platform";
+};
+
+export default function Header({ sidebarCollapsed }: { sidebarCollapsed: boolean }) {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const pageTitle = getPageTitle(pathname || "");
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" });
@@ -39,43 +55,51 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b z-50">
-        <div className="h-full px-4 flex items-center justify-end gap-3">
-          {/* User Info */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{session?.user?.name}</span>
-            {session?.user?.role === "admin" && (
-              <Badge variant="default" className="ml-2">
-                <Shield className="w-3 h-3 mr-1" />
-                Admin
-              </Badge>
-            )}
+      <header className={`fixed top-0 right-0 h-16 bg-card border-b z-40 transition-all duration-300 ${
+        sidebarCollapsed ? 'left-16' : 'left-56'
+      }`}>
+        <div className="h-full px-6 flex items-center justify-between gap-3">
+          {/* Page Title */}
+          <h1 className="text-xl font-bold">{pageTitle}</h1>
+
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-3">
+            {/* User Info */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-secondary rounded-lg">
+              <User className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">{session?.user?.name}</span>
+              {session?.user?.role === "admin" && (
+                <Badge variant="default" className="ml-2">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Admin
+                </Badge>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-9 w-9"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+
+            {/* Logout */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowLogoutDialog(true)}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
           </div>
-
-          {/* Theme Toggle */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleTheme}
-            className="h-9 w-9"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </Button>
-
-          {/* Logout */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowLogoutDialog(true)}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Sign Out</span>
-          </Button>
         </div>
       </header>
 

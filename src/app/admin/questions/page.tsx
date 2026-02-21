@@ -22,9 +22,12 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Upload, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Search, FileUp } from "lucide-react";
 import AdminQuestionForm from "@/components/AdminQuestionForm";
 import BulkImportDialog from "@/components/BulkImportDialog";
+import PdfImportDialog from "@/components/PdfImportDialog";
+import PdfReviewDialog from "@/components/PdfReviewDialog";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Question {
   _id: string;
@@ -34,7 +37,8 @@ interface Question {
   options: [string, string, string, string];
   correctAnswer: 0 | 1 | 2 | 3;
   difficulty: "easy" | "medium" | "hard";
-  explanation: string;
+  pyqYear?: number;
+  explanation?: string;
   tags: string[];
   createdAt: string;
 }
@@ -48,6 +52,10 @@ export default function AdminQuestionsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showPdfImport, setShowPdfImport] = useState(false);
+  const [showPdfReview, setShowPdfReview] = useState(false);
+  const [extractedQuestions, setExtractedQuestions] = useState<any[]>([]);
+  const [pdfMetadata, setPdfMetadata] = useState<any>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
   // Filters
@@ -145,6 +153,31 @@ export default function AdminQuestionsPage() {
     fetchQuestions();
   };
 
+  const handlePdfImportClose = () => {
+    // Only close if we're not in the middle of extraction
+    setShowPdfImport(false);
+  };
+
+  const handleQuestionsExtracted = (questions: any[], metadata: any) => {
+    setExtractedQuestions(questions);
+    setPdfMetadata(metadata);
+    setShowPdfImport(false);
+    setShowPdfReview(true);
+  };
+
+  const handlePdfReviewClose = () => {
+    setShowPdfReview(false);
+    setExtractedQuestions([]);
+    setPdfMetadata(null);
+  };
+
+  const handlePdfImportComplete = () => {
+    setShowPdfReview(false);
+    setExtractedQuestions([]);
+    setPdfMetadata(null);
+    fetchQuestions();
+  };
+
   const filteredQuestions = questions.filter((q) =>
     searchQuery
       ? q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -153,26 +186,23 @@ export default function AdminQuestionsPage() {
   );
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-3xl font-bold">Question Management</CardTitle>
+            <CardTitle></CardTitle>
             <div className="flex gap-2">
+              <Button onClick={() => setShowPdfImport(true)} variant="outline">
+                <FileUp className="mr-2 h-4 w-4" />
+                Import from PDF
+              </Button>
               <Button onClick={() => setShowBulkImport(true)} variant="outline">
                 <Upload className="mr-2 h-4 w-4" />
-                Bulk Import
+                Bulk Import JSON
               </Button>
               <Button onClick={() => setShowForm(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -242,6 +272,7 @@ export default function AdminQuestionsPage() {
                   <TableHead>Subtopic</TableHead>
                   <TableHead>Question</TableHead>
                   <TableHead>Difficulty</TableHead>
+                  <TableHead>PYQ</TableHead>
                   <TableHead>Tags</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -249,7 +280,7 @@ export default function AdminQuestionsPage() {
               <TableBody>
                 {filteredQuestions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No questions found
                     </TableCell>
                   </TableRow>
@@ -263,14 +294,21 @@ export default function AdminQuestionsPage() {
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             question.difficulty === "easy"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                               : question.difficulty === "medium"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                           }`}
                         >
                           {question.difficulty}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {question.pyqYear && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                            PYQ - {question.pyqYear}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
@@ -330,6 +368,24 @@ export default function AdminQuestionsPage() {
 
       {/* Bulk Import Dialog */}
       {showBulkImport && <BulkImportDialog onClose={handleBulkImportClose} />}
-    </div>
+
+      {/* PDF Import Dialog */}
+      {showPdfImport && (
+        <PdfImportDialog
+          onClose={handlePdfImportClose}
+          onQuestionsExtracted={handleQuestionsExtracted}
+        />
+      )}
+
+      {/* PDF Review Dialog */}
+      {showPdfReview && extractedQuestions.length > 0 && pdfMetadata && (
+        <PdfReviewDialog
+          questions={extractedQuestions}
+          metadata={pdfMetadata}
+          onClose={handlePdfReviewClose}
+          onImport={handlePdfImportComplete}
+        />
+      )}
+    </>
   );
 }

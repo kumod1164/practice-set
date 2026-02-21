@@ -285,12 +285,38 @@ export class QuestionService {
         const mediumQuestions = availableQuestions.filter((q) => q.difficulty === "medium");
         const hardQuestions = availableQuestions.filter((q) => q.difficulty === "hard");
 
+        console.log("Mixed difficulty distribution:", {
+          total: config.questionCount,
+          easy: easyQuestions.length,
+          medium: mediumQuestions.length,
+          hard: hardQuestions.length,
+          perDifficulty: questionsPerDifficulty
+        });
+
         // Select from each difficulty level
-        selectedQuestions = [
-          ...this.selectAndShuffle(easyQuestions, questionsPerDifficulty + (remainder > 0 ? 1 : 0), attemptedQuestionIds),
-          ...this.selectAndShuffle(mediumQuestions, questionsPerDifficulty + (remainder > 1 ? 1 : 0), attemptedQuestionIds),
-          ...this.selectAndShuffle(hardQuestions, questionsPerDifficulty, attemptedQuestionIds),
-        ];
+        const easySelected = this.selectAndShuffle(easyQuestions, questionsPerDifficulty + (remainder > 0 ? 1 : 0), attemptedQuestionIds);
+        const mediumSelected = this.selectAndShuffle(mediumQuestions, questionsPerDifficulty + (remainder > 1 ? 1 : 0), attemptedQuestionIds);
+        const hardSelected = this.selectAndShuffle(hardQuestions, questionsPerDifficulty, attemptedQuestionIds);
+
+        selectedQuestions = [...easySelected, ...mediumSelected, ...hardSelected];
+
+        console.log("Selected counts:", {
+          easy: easySelected.length,
+          medium: mediumSelected.length,
+          hard: hardSelected.length,
+          total: selectedQuestions.length
+        });
+
+        // If we don't have enough questions from even distribution, fill from available pool
+        if (selectedQuestions.length < config.questionCount) {
+          const selectedIds = new Set(selectedQuestions.map(q => q._id.toString()));
+          const remaining = availableQuestions.filter(q => !selectedIds.has(q._id.toString()));
+          const shuffledRemaining = this.shuffle(remaining);
+          const needed = config.questionCount - selectedQuestions.length;
+          selectedQuestions = [...selectedQuestions, ...shuffledRemaining.slice(0, needed)];
+          
+          console.log(`Filled ${needed} more questions from remaining pool. New total: ${selectedQuestions.length}`);
+        }
       } else {
         // Prioritize not attempted, then shuffle
         const shuffledNotAttempted = this.shuffle(notAttempted);

@@ -76,7 +76,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <aside
       className={cn(
         "fixed left-0 top-0 h-screen bg-card border-r transition-all duration-300 z-50",
-        collapsed ? "w-16" : "w-64"
+        collapsed ? "w-16" : "w-56"
       )}
     >
       <div className="flex flex-col h-full">
@@ -192,7 +192,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className="border-t bg-secondary/30 p-3">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
-              {collapsed ? "v1.0" : "Version 1.0.0"}
+              {collapsed ? "v1.0" : "Version 1.1.0"}
             </p>
           </div>
         </div>

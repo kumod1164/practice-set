@@ -17,6 +17,7 @@ import {
   PieChart,
   Activity,
 } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function AnalyticsPage() {
   const { data: session, status } = useSession();
@@ -53,26 +54,12 @@ export default function AnalyticsPage() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading analytics...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!stats || stats.totalTests === 0) {
     return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Analytics Dashboard
-          </h1>
-          <p className="text-muted-foreground">Track your performance and progress</p>
-        </div>
-
+      <>
         <Card>
           <CardContent className="pt-6 text-center">
             <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -82,19 +69,12 @@ export default function AnalyticsPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Analytics Dashboard
-        </h1>
-        <p className="text-muted-foreground">Detailed insights into your performance</p>
-      </div>
-
+    <>
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="border-l-4 border-l-blue-500">
@@ -295,6 +275,6 @@ export default function AnalyticsPage() {
           </ul>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

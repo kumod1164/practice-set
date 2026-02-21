@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import SessionProvider from "@/components/SessionProvider";
 import AppLayout from "@/components/AppLayout";
 import { Toaster } from "@/components/ui/toaster";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SessionProvider>
             <AppLayout>{children}</AppLayout>
             <Toaster />
+            <SpeedInsights />
           </SessionProvider>
         </ThemeProvider>
       </body>
