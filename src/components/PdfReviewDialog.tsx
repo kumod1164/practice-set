@@ -98,9 +98,9 @@ export default function PdfReviewDialog({
         options: q.options as [string, string, string, string],
         correctAnswer: q.correctAnswer as 0 | 1 | 2 | 3,
         difficulty: metadata.difficulty,
-        explanation: q.explanation,
-        tags: metadata.tags,
-        pyqYear: metadata.pyqYear,
+        explanation: q.explanation || undefined,
+        tags: metadata.tags || [],
+        pyqYear: metadata.pyqYear || undefined,
       }));
 
       const response = await fetch("/api/admin/questions/bulk-import", {
@@ -112,15 +112,32 @@ export default function PdfReviewDialog({
       const data = await response.json();
 
       if (data.success) {
-        toast({
-          title: "Success",
-          description: `Imported ${selectedQuestions.length} questions successfully`,
-        });
-        onImport();
+        const result = data.data;
+        if (result.successful > 0) {
+          toast({
+            title: "Import Completed",
+            description: result.failed > 0 
+              ? `Imported ${result.successful} questions. ${result.failed} failed.`
+              : `Successfully imported ${result.successful} questions`,
+            variant: result.failed > 0 ? "default" : "default",
+          });
+          onImport();
+        } else {
+          // All failed
+          const errorMessages = result.errors.slice(0, 3).map((e: any) => 
+            e.line > 0 ? `Line ${e.line}: ${e.error}` : e.error
+          ).join('\n');
+          
+          toast({
+            title: "Import Failed",
+            description: `All questions failed validation:\n${errorMessages}${result.errors.length > 3 ? '\n...' : ''}`,
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Import Failed",
-          description: data.error,
+          description: data.error || "Failed to import questions",
           variant: "destructive",
         });
       }

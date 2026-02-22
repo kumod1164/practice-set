@@ -13,23 +13,20 @@ export const QuestionSchema = z.object({
   topic: z
     .string()
     .min(1, "Topic is required")
-    .max(100, "Topic must be at most 100 characters")
     .trim(),
   subtopic: z
     .string()
     .min(1, "Subtopic is required")
-    .max(100, "Subtopic must be at most 100 characters")
     .trim(),
   question: z
     .string()
-    .min(10, "Question must be at least 10 characters")
-    .max(1000, "Question must be at most 1000 characters"),
+    .min(1, "Question is required"),
   options: z
     .tuple([
-      z.string().min(1, "Option 1 is required").max(500, "Option 1 must be at most 500 characters"),
-      z.string().min(1, "Option 2 is required").max(500, "Option 2 must be at most 500 characters"),
-      z.string().min(1, "Option 3 is required").max(500, "Option 3 must be at most 500 characters"),
-      z.string().min(1, "Option 4 is required").max(500, "Option 4 must be at most 500 characters"),
+      z.string().min(1, "Option 1 is required"),
+      z.string().min(1, "Option 2 is required"),
+      z.string().min(1, "Option 3 is required"),
+      z.string().min(1, "Option 4 is required"),
     ])
     .describe("Exactly 4 options are required"),
   correctAnswer: z
@@ -42,17 +39,17 @@ export const QuestionSchema = z.object({
   }),
   explanation: z
     .string()
-    .min(10, "Explanation must be at least 10 characters")
-    .max(2000, "Explanation must be at most 2000 characters")
     .optional()
-    .or(z.literal("")),
-  tags: z.array(z.string()).optional().default([]),
+    .nullable()
+    .transform(val => val || undefined),
+  tags: z.array(z.string()).optional().nullable().default([]),
   pyqYear: z
     .number()
     .int("PYQ year must be an integer")
     .min(1950, "PYQ year must be 1950 or later")
     .max(new Date().getFullYear() + 1, `PYQ year cannot be beyond ${new Date().getFullYear() + 1}`)
-    .optional(),
+    .optional()
+    .nullable(),
 });
 
 export type QuestionInput = z.infer<typeof QuestionSchema>;
@@ -157,7 +154,7 @@ export const QuestionFilterSchema = z.object({
   subtopic: z.string().optional(),
   difficulty: z.enum(["easy", "medium", "hard"]).optional(),
   tags: z.array(z.string()).optional(),
-  limit: z.number().int().min(1).max(100).optional().default(50),
+  limit: z.number().int().min(1).max(1000).optional().default(1000),
   skip: z.number().int().min(0).optional().default(0),
 });
 

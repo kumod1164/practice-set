@@ -21,17 +21,25 @@ export async function GET(request: NextRequest) {
       subtopic: searchParams.get("subtopic") || undefined,
       difficulty: (searchParams.get("difficulty") as "easy" | "medium" | "hard") || undefined,
       tags: searchParams.get("tags")?.split(",") || undefined,
-      limit: parseInt(searchParams.get("limit") || "50"),
+      limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 1000,
       skip: parseInt(searchParams.get("skip") || "0"),
     };
 
     // Get questions
     const questions = await questionService.getQuestions(filters);
 
+    // Get total count without limit for accurate display
+    const totalCount = await questionService.getQuestionCount({
+      topics: filters.topic ? [filters.topic] : undefined,
+      subtopics: filters.subtopic ? [filters.subtopic] : undefined,
+      difficulty: filters.difficulty,
+    });
+
     return Response.json({
       success: true,
       data: questions,
       count: questions.length,
+      total: totalCount,
     });
   } catch (error) {
     return handleAPIError(error);
