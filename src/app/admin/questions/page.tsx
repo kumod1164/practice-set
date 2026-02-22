@@ -28,6 +28,15 @@ import BulkImportDialog from "@/components/BulkImportDialog";
 import PdfImportDialog from "@/components/PdfImportDialog";
 import PdfReviewDialog from "@/components/PdfReviewDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Question {
   _id: string;
@@ -50,6 +59,7 @@ export default function AdminQuestionsPage() {
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showPdfImport, setShowPdfImport] = useState(false);
@@ -58,11 +68,19 @@ export default function AdminQuestionsPage() {
   const [pdfMetadata, setPdfMetadata] = useState<any>(null);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
+  // Available topics and subtopics
+  const [availableTopics, setAvailableTopics] = useState<string[]>([]);
+  const [availableSubtopics, setAvailableSubtopics] = useState<string[]>([]);
+
   // Filters
   const [topicFilter, setTopicFilter] = useState("");
   const [subtopicFilter, setSubtopicFilter] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -71,28 +89,89 @@ export default function AdminQuestionsPage() {
       router.push("/dashboard");
     } else if (status === "authenticated") {
       fetchQuestions();
+      fetchTopics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, router]);
+
+  const fetchTopics = async () => {
+    try {
+      const response = await fetch("/api/tests/topics");
+      const data = await response.json();
+      if (data.success) {
+        setAvailableTopics(data.data.topics || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch topics:", error);
+    }
+  };
+
+  // Update available subtopics when topic filter changes
+  useEffect(() => {
+    if (topicFilter) {
+      const subtopics = [...new Set(
+        questions
+          .filter(q => q.topic === topicFilter)
+          .map(q => q.subtopic)
+      )].sort();
+      setAvailableSubtopics(subtopics);
+    } else {
+      setAvailableSubtopics([]);
+    }
+  }, [topicFilter, questions]);
 
   const fetchQuestions = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (topicFilter) params.append("topic", topicFilter);
-      if (subtopicFilter) params.append("subtopic", subtopicFilter);
+      if (topicFilter && topicFilter !== "all") params.append("topic", topicFilter);
+      if (subtopicFilter && subtopicFilter !== "all") params.append("subtopic", subtopicFilter);
       if (difficultyFilter && difficultyFilter !== "all") params.append("difficulty", difficultyFilter);
+      
+      // Fetch all questions for client-side pagination and search
+      params.append("limit", "1000");
 
       const response = await fetch(`/api/admin/questions?${params.toString()}`);
       const data = await response.json();
 
       if (data.success) {
         setQuestions(data.data);
+        setTotalCount(data.total || data.data.length);
+        setCurrentPage(1); // Reset to first page when filters change
       } else {
         toast({
           title: "Error",
           description: "Failed to fetch questions",
           variant: "destructive",
         });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch questions",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetFilters = async () => {
+    setTopicFilter("");
+    setSubtopicFilter("");
+    setDifficultyFilter("all");
+    setSearchQuery("");
+    
+    // Fetch all questions without filters
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/questions?limit=1000`);
+      const data = await response.json();
+
+      if (data.success) {
+        setQuestions(data.data);
+        setTotalCount(data.total || data.data.length);
+        setCurrentPage(1);
       }
     } catch (error) {
       toast({
@@ -185,6 +264,17 @@ export default function AdminQuestionsPage() {
       : true
   );
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredQuestions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedQuestions = filteredQuestions.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   if (status === "loading" || loading) {
     return <LoadingSpinner />;
   }
@@ -223,16 +313,39 @@ export default function AdminQuestionsPage() {
                 className="pl-10"
               />
             </div>
-            <Input
-              placeholder="Filter by topic"
-              value={topicFilter}
-              onChange={(e) => setTopicFilter(e.target.value)}
-            />
-            <Input
-              placeholder="Filter by subtopic"
-              value={subtopicFilter}
-              onChange={(e) => setSubtopicFilter(e.target.value)}
-            />
+            
+            <Select value={topicFilter || "all"} onValueChange={(val) => setTopicFilter(val === "all" ? "" : val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by topic" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Topics</SelectItem>
+                {availableTopics.map((topic) => (
+                  <SelectItem key={topic} value={topic}>
+                    {topic}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select 
+              value={subtopicFilter || "all"} 
+              onValueChange={(val) => setSubtopicFilter(val === "all" ? "" : val)}
+              disabled={!topicFilter}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by subtopic" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subtopics</SelectItem>
+                {availableSubtopics.map((subtopic) => (
+                  <SelectItem key={subtopic} value={subtopic}>
+                    {subtopic}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Filter by difficulty" />
@@ -251,12 +364,7 @@ export default function AdminQuestionsPage() {
               Apply Filters
             </Button>
             <Button 
-              onClick={() => {
-                setTopicFilter("");
-                setSubtopicFilter("");
-                setDifficultyFilter("all");
-                setSearchQuery("");
-              }} 
+              onClick={handleResetFilters} 
               variant="ghost"
             >
               Reset Filters
@@ -274,18 +382,19 @@ export default function AdminQuestionsPage() {
                   <TableHead>Difficulty</TableHead>
                   <TableHead>PYQ</TableHead>
                   <TableHead>Tags</TableHead>
+                  <TableHead>Date Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredQuestions.length === 0 ? (
+                {paginatedQuestions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No questions found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredQuestions.map((question) => (
+                  paginatedQuestions.map((question) => (
                     <TableRow key={question._id}>
                       <TableCell className="font-medium">{question.topic}</TableCell>
                       <TableCell>{question.subtopic}</TableCell>
@@ -327,6 +436,13 @@ export default function AdminQuestionsPage() {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {question.createdAt ? new Date(question.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        }) : '-'}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -352,8 +468,64 @@ export default function AdminQuestionsPage() {
             </Table>
           </div>
 
-          <div className="mt-4 text-sm text-muted-foreground">
-            Showing {filteredQuestions.length} of {questions.length} questions
+          <div className="mt-4 flex flex-row items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground min-w-0">
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredQuestions.length)} of {filteredQuestions.length} questions
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex-shrink-0">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage = 
+                        page === 1 || 
+                        page === totalPages || 
+                        (page >= currentPage - 1 && page <= currentPage + 1);
+                      
+                      const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
+                      const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
+
+                      if (showEllipsisBefore || showEllipsisAfter) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+
+                      if (!showPage) return null;
+
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

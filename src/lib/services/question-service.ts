@@ -137,7 +137,7 @@ export class QuestionService {
       }
 
       const questions = await Question.find(query)
-        .limit(filters.limit || 50)
+        .limit(filters.limit || 1000)
         .skip(filters.skip || 0)
         .sort({ createdAt: -1 });
 
@@ -192,32 +192,48 @@ export class QuestionService {
       const validation = validate(QuestionSchema, question);
       if (!validation.success) {
         result.failed++;
+        const errorMsg = getFirstError(validation.errors);
+        console.log(`Validation failed for question ${index + 1}:`, errorMsg, question);
         result.errors.push({
           line: index + 1,
-          error: getFirstError(validation.errors),
+          error: errorMsg,
         });
       } else {
         validQuestions.push(validation.data);
       }
     });
 
+    console.log(`Validation complete: ${validQuestions.length} valid, ${result.failed} failed`);
+
     // If all questions are valid, insert them in a transaction
     if (validQuestions.length > 0) {
       try {
-        const session = await mongoose.startSession();
-        await session.withTransaction(async () => {
-          await Question.insertMany(validQuestions, { session });
+        // Try inserting without transaction first for better error messages
+        const insertedQuestions = await Question.insertMany(validQuestions, { 
+          ordered: false // Continue on error
         });
-        await session.endSession();
-
-        result.successful = validQuestions.length;
-      } catch (error) {
-        // If transaction fails, all inserts are rolled back
-        result.failed += validQuestions.length;
-        result.errors.push({
-          line: 0,
-          error: "Transaction failed - no questions were imported",
-        });
+        
+        result.successful = insertedQuestions.length;
+      } catch (error: any) {
+        // Handle individual insertion errors
+        if (error.writeErrors) {
+          error.writeErrors.forEach((err: any) => {
+            result.failed++;
+            result.errors.push({
+              line: err.index + 1,
+              error: err.errmsg || err.message || "Database insertion failed",
+            });
+          });
+          // Count successful insertions
+          result.successful = validQuestions.length - error.writeErrors.length;
+        } else {
+          // Complete failure
+          result.failed += validQuestions.length;
+          result.errors.push({
+            line: 0,
+            error: error.message || "Database insertion failed",
+          });
+        }
       }
     }
 

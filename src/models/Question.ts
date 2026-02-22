@@ -32,17 +32,15 @@ const QuestionSchema = new Schema<IQuestion>(
     question: {
       type: String,
       required: true,
-      minlength: 10,
-      maxlength: 1000,
     },
     options: {
       type: [String],
       required: true,
       validate: {
         validator: function (v: string[]) {
-          return v.length === 4 && v.every((opt) => opt.length >= 1 && opt.length <= 500);
+          return v.length === 4 && v.every((opt) => opt.length >= 1);
         },
-        message: "Must have exactly 4 options, each between 1-500 characters",
+        message: "Must have exactly 4 options, each with at least 1 character",
       },
     },
     correctAnswer: {
@@ -60,8 +58,6 @@ const QuestionSchema = new Schema<IQuestion>(
     explanation: {
       type: String,
       required: false,
-      minlength: 10,
-      maxlength: 2000,
     },
     tags: {
       type: [String],
