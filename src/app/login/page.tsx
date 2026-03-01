@@ -162,11 +162,11 @@ const LoginPage = () => {
             <div className="text-center space-y-3">
               <p className="text-sm text-gray-600">
                 By continuing, you agree to our{" "}
-                <a href="#" className="text-blue-600 hover:underline font-medium">
+                <a href="/terms" className="text-blue-600 hover:underline font-medium">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="#" className="text-blue-600 hover:underline font-medium">
+                <a href="/privacy" className="text-blue-600 hover:underline font-medium">
                   Privacy Policy
                 </a>
               </p>

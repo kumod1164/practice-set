@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,13 +7,13 @@ import {
   LayoutDashboard,
   BookOpen,
   History,
-  Settings,
   Shield,
   ChevronLeft,
   ChevronRight,
   GraduationCap,
   FileQuestion,
   BarChart3,
+  FolderTree,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +66,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       label: "Questions",
       href: "/admin/questions",
       color: "text-indigo-500",
+    },
+    {
+      icon: FolderTree,
+      label: "Topic Management",
+      href: "/admin/topics",
+      color: "text-emerald-500",
     },
   ];
 
@@ -192,7 +197,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className="border-t bg-secondary/30 p-3">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
-              {collapsed ? "v1.5" : "Version 1.5.0"}
+              {collapsed ? "v1.7" : "Version 1.7.0"}
             </p>
           </div>
         </div>

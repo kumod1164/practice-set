@@ -63,15 +63,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
               © 2024 UPSC Practice Platform. All rights reserved.
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">
+              <a href="/faq" className="hover:text-primary transition-colors">
+                FAQ
+              </a>
+              <span>•</span>
+              <a href="/privacy" className="hover:text-primary transition-colors">
                 Privacy Policy
               </a>
               <span>•</span>
-              <a href="#" className="hover:text-primary transition-colors">
+              <a href="/terms" className="hover:text-primary transition-colors">
                 Terms of Service
               </a>
               <span>•</span>
-              <a href="#" className="hover:text-primary transition-colors">
+              <a href="/contact" className="hover:text-primary transition-colors">
                 Contact Us
               </a>
             </div>
