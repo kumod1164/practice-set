@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { X } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 interface Question {
   _id?: string;
@@ -57,12 +58,82 @@ export default function AdminQuestionForm({ question, onClose }: AdminQuestionFo
   });
   const [tagsInput, setTagsInput] = useState("");
 
+  // Topic hierarchy state
+  const [hierarchy, setHierarchy] = useState<any[]>([]);
+  const [selectedSuperTopic, setSelectedSuperTopic] = useState("");
+  const [availableTopics, setAvailableTopics] = useState<string[]>([]);
+  const [availableSubtopics, setAvailableSubtopics] = useState<string[]>([]);
+
   useEffect(() => {
     if (question) {
       setFormData(question);
       setTagsInput(question.tags.join(", "));
     }
+    fetchHierarchy();
   }, [question]);
+
+  const fetchHierarchy = async () => {
+    try {
+      const response = await fetch("/api/admin/topics");
+      const data = await response.json();
+      if (data.success) {
+        setHierarchy(data.data);
+        
+        // If editing, pre-select the hierarchy
+        if (question) {
+          const superTopic = data.data.find((st: any) => 
+            st.topics.some((t: any) => t.topic === question.topic)
+          );
+          if (superTopic) {
+            setSelectedSuperTopic(superTopic.superTopic);
+            updateAvailableTopics(superTopic.superTopic, data.data);
+            updateAvailableSubtopics(question.topic, superTopic);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch hierarchy:", error);
+    }
+  };
+
+  const updateAvailableTopics = (superTopic: string, hierarchyData: any[]) => {
+    const superTopicData = hierarchyData.find((st: any) => st.superTopic === superTopic);
+    if (superTopicData) {
+      const topics = superTopicData.topics.map((t: any) => t.topic);
+      setAvailableTopics(topics);
+    } else {
+      setAvailableTopics([]);
+    }
+  };
+
+  const updateAvailableSubtopics = (topic: string, superTopicData: any) => {
+    const topicData = superTopicData.topics.find((t: any) => t.topic === topic);
+    if (topicData) {
+      const subtopics = topicData.subtopics.map((st: any) => st.subtopic);
+      setAvailableSubtopics(subtopics);
+    } else {
+      setAvailableSubtopics([]);
+    }
+  };
+
+  const handleSuperTopicChange = (value: string) => {
+    setSelectedSuperTopic(value);
+    setFormData({ ...formData, topic: "", subtopic: "" });
+    updateAvailableTopics(value, hierarchy);
+    setAvailableSubtopics([]);
+  };
+
+  const handleTopicChange = (value: string) => {
+    setFormData({ ...formData, topic: value, subtopic: "" });
+    const superTopicData = hierarchy.find((st: any) => st.superTopic === selectedSuperTopic);
+    if (superTopicData) {
+      updateAvailableSubtopics(value, superTopicData);
+    }
+  };
+
+  const handleSubtopicChange = (value: string) => {
+    setFormData({ ...formData, subtopic: value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,25 +221,47 @@ export default function AdminQuestionForm({ question, onClose }: AdminQuestionFo
             {/* Left Column - Form */}
             <div className="space-y-4">
               <div>
-                <Label htmlFor="topic">Topic *</Label>
-                <Input
-                  id="topic"
-                  value={formData.topic}
-                  onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                  required
-                  placeholder="e.g., History"
+                <Label htmlFor="superTopic">Super Topic *</Label>
+                <SearchableSelect
+                  value={selectedSuperTopic}
+                  onValueChange={handleSuperTopicChange}
+                  options={hierarchy.map((st: any) => st.superTopic)}
+                  placeholder="Select or type super topic"
+                  allowCustom={true}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Select from existing or type to create new
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="topic">Topic *</Label>
+                <SearchableSelect
+                  value={formData.topic}
+                  onValueChange={handleTopicChange}
+                  options={availableTopics}
+                  placeholder="Select or type topic"
+                  disabled={!selectedSuperTopic}
+                  allowCustom={true}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {!selectedSuperTopic ? "Select super topic first" : "Select from existing or type to create new"}
+                </p>
               </div>
 
               <div>
                 <Label htmlFor="subtopic">Subtopic *</Label>
-                <Input
-                  id="subtopic"
+                <SearchableSelect
                   value={formData.subtopic}
-                  onChange={(e) => setFormData({ ...formData, subtopic: e.target.value })}
-                  required
-                  placeholder="e.g., Ancient India"
+                  onValueChange={handleSubtopicChange}
+                  options={availableSubtopics}
+                  placeholder="Select or type subtopic"
+                  disabled={!formData.topic}
+                  allowCustom={true}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {!formData.topic ? "Select topic first" : "Select from existing or type to create new"}
+                </p>
               </div>
 
               <div>
