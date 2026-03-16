@@ -65,7 +65,7 @@
 
 ---
 
-## � Tech Stack
+## 🚀 Tech Stack
 
 ### Frontend
 - **Next.js 16.1** - React framework with App Router
@@ -237,7 +237,7 @@ practice-set/
 
 ---
 
-## � Question Format
+## 📝 Question Format
 
 Questions should follow this JSON structure for bulk import:
 
@@ -261,7 +261,7 @@ Questions should follow this JSON structure for bulk import:
 
 ---
 
-## � PDF Extraction Workflow
+## 🤖 PDF Extraction Workflow
 
 1. Go to **Admin → Questions**
 2. Click **"Import from PDF"**
@@ -278,7 +278,7 @@ Questions should follow this JSON structure for bulk import:
 
 ---
 
-## �️ Topic Hierarchy
+## 🗂️ Topic Hierarchy
 
 The platform uses a 3-level topic structure:
 
@@ -315,17 +315,9 @@ MONGODB_URI=<your-mongodb-uri>
 GEMINI_API_KEY=<your-gemini-key>
 ```
 
----
+## 📧 Support
 
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## � Support
-
-For support or feedback, visit the [Contact Us](https://your-domain.com/contact) page or email kumodsharma1164@gmail.com.
+For support or feedback, visit the [Contact Us](https://practice-set-bice.vercel.app/contact) page or email kumodsharma1164@gmail.com.
 
 ---
 
