@@ -132,8 +132,17 @@ export default function Home() {
 
       {/* Footer — Server Rendered */}
       <footer className="relative border-t border-gray-200 bg-white/50 backdrop-blur-sm py-6 sm:py-8">
-        <div className="container mx-auto px-4 text-center text-gray-600 text-sm sm:text-base">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 text-gray-600 text-sm sm:text-base">
           <p>© 2024 UPSC Practice Platform. Built with ❤️ for aspirants.</p>
+          <div className="flex items-center gap-4">
+            <a href="/faq" className="hover:text-blue-600 transition-colors">FAQ</a>
+            <span>•</span>
+            <a href="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</a>
+            <span>•</span>
+            <a href="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</a>
+            <span>•</span>
+            <a href="/contact" className="hover:text-blue-600 transition-colors">Contact Us</a>
+          </div>
         </div>
       </footer>
     </main>
