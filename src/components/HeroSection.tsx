@@ -77,8 +77,8 @@ export default function HeroSection() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-12 sm:mt-16 max-w-4xl mx-auto px-4">
                 {[
-                    { value: "1000+", label: "Questions" },
-                    { value: "50+", label: "Topics" },
+                    { value: "100+", label: "Questions" },
+                    { value: "10+", label: "Topics" },
                     { value: "3", label: "Difficulty Levels" },
                     { value: "100%", label: "UPSC Standard" },
                 ].map((stat, index) => (
